@@ -9,21 +9,25 @@ const distributors ={
 }
 // const makes = ['Aprilia', 'Arctic Cat', 'Argo Atv', 'BETA', 'BMW', 'Bombardier', 'Buell', 'Cagiva', 'Can-Am', 'Cannondale', 'CF-Moto', 'Ducati', 'E-TON', 'GAS GAS', 'Harley-Davidson', 'Honda', 'Husaberg', 'Husqvarna', 'Hyosung', 'Indian', 'Kasea', 'Kawasaki', 'KTM', 'Kubota', 'KYMCO', 'Mercury', 'Moto Guzzi', 'MV Agusta', 'MZ', 'Pagsta Motors', 'Piaggio', 'Polaris', 'Renault', 'Sea-Doo', 'Ski-Doo', 'Sno-Jet', 'Suzuki', 'Triumph', 'Vespa', 'Victory', 'Yamaha']
 const makes = [
-  'Arctic Cat',
-  'Argo Atv',
-  'GAS GAS',
-  'Moto Guzzi',
-  'MV Agusta',
-  'Pagsta Motors',
-  'Ski Doo', 
-  'John Deere', 
-  'ARCTIC CAT',
-  'arctic Cat'
+    'Arctic Cat',
+    'Argo Atv',
+    'GAS GAS',
+    'Moto Guzzi',
+    'MV Agusta',
+	'Pagsta Motors', 
+	'Gas Gas', 
+	'CF Moto',
+	'Harley Davidson',
+	'arctic Cat',
+	'ARCTIC CAT',
+	'Ski Doo',
+	'John Deere'
 ]
 let csvData = [];
 let products = [];
 let fitments = [];
-let makeFixes = [];
+// let makeFixes = [];
+let needFix = [];
 
 const filepath = path.resolve(`mastersheetFinal.csv`);
 const file = fs.createReadStream(filepath)
@@ -35,12 +39,12 @@ papa.parse(file, {
 		let fixFile = fs.createReadStream(fixFilePath)
 		csvData = results.data;
 		console.log(`Data length:`, csvData.length);
-		papa.parse(fixFile, {
-			header: true,
-			skipEmptyLines: true,
-			complete: (res, file) => {
-				makeFixes = res.data
-				console.log('makeFixes length:', makeFixes.length)
+		// papa.parse(fixFile, {
+		// 	header: true,
+		// 	skipEmptyLines: true,
+		// 	complete: (res, file) => {
+		// 		makeFixes = res.data
+		// 		console.log('makeFixes length:', makeFixes.length)
 				let tempTitles = [];
 				let productId = 0
 	
@@ -74,23 +78,36 @@ papa.parse(file, {
 							let model;
 							let ebayModel;
 							let modelYear;
+							make = prodTitle[1].trim().split(' ')[0]
+							modelYear = prodTitle[1].split(make)
 							makes.forEach(item => {
 								if(prodTitle[1].includes(item)) {
 									make = item;
 									modelYear = prodTitle[1].split(make)
-								} else {
-									make = prodTitle[1].split(' ')[0]
-									modelYear = prodTitle[1].split(make)
-								}
-							})
-							year = modelYear[1].split(' ').pop();
-							model = modelYear.join(' ').trim();
-							if(!model) console.log(prodTitle[1])
-							makeFixes.forEach(fix => {
-								if (model && fix.bad.includes(model)){
-									ebayModel = fix.good
 								} 
 							})
+							if(parseInt(modelYear[1].split(' ').pop()) > 1900) {
+								let modelArr = modelYear[1].split(' ');
+								year = modelArr.pop();
+								model = modelArr.join(' ').trim();
+								
+							} else if(modelYear[1].includes('  ')){
+								let tempRow = modelYear[1].split('  ');
+								let modelArr = tempRow[0].split(' ');
+								year = modelArr.pop();
+								model = modelArr.join(' ').trim();
+							} else  {
+								year = '';
+								model = modelYear[1].trim()
+							}
+							
+							if(!model) needFix.push(row)
+							// makeFixes.forEach(fix => {
+							// 	if (model && fix.bad ===model.trim()){
+							// 		// console.log('found one', prodTitle[1], model, fix)
+							// 		ebayModel = fix.good
+							// 	} 
+							// })
 							if (year.includes('-')){
 								// console.log(year)
 								let yearRange = year.split('-');
@@ -139,24 +156,34 @@ papa.parse(file, {
 							let model;
 							let ebayModel;
 							let modelYear;
+							make = prodTitle[1].trim().split(' ')[0]
+							modelYear = prodTitle[1].split(make)
 							makes.forEach(item => {
 								if(prodTitle[1].includes(item)) {
 									make = item;
-									modelYear = prodTitle[1].split(make)
-								} else {
-									make = prodTitle[1].split(' ')[0]
-									modelYear = prodTitle[1].split(make)
-								}
-							})
-							year = modelYear[1].split(' ').pop();
-							model = modelYear.join(' ').trim();
-							if(!model) console.log(prodTitle[1])
-							makeFixes.forEach(fix => {
-								if (model && fix.bad.includes(model)){
-									// console.log('found one', prodTitle[1], model, fix)
-									ebayModel = fix.good
+									modelYear = prodTitle[1].split(make);
 								} 
 							})
+							if(parseInt(modelYear[1].split(' ').pop()) > 1900) {
+								let modelArr = modelYear[1].split(' ');
+								year = modelArr.pop();
+								model = modelArr.join(' ').trim();
+							} else if(modelYear[1].includes('  ')){
+								let tempRow = modelYear[1].split('  ');
+								let modelArr = tempRow[0].split(' ');
+								year = modelArr.pop();
+								model = modelArr.join(' ').trim();
+							} else {
+								year = '';
+								model = modelYear[1].trim()
+							}
+							if(!model) needFix.push(row)
+							// makeFixes.forEach(fix => {
+							// 	if (model && fix.bad === model.trim()){
+							// 		// console.log('found one', prodTitle[1], model, fix)
+							// 		ebayModel = fix.good
+							// 	} 
+							// })
 							if (year.includes('-')){
 								// console.log(year)
 								let yearRange = year.split('-');
@@ -201,27 +228,36 @@ papa.parse(file, {
 					}
 				})
 				console.log('MADE IT!!');
-				console.log(products.length);
-				console.log('PRODUCTS',products.slice(0,2));
+				// console.log(products.length);
+				// console.log('PRODUCTS',products.slice(0,2));
 				console.log(fitments.length);
 				console.log('fitments',fitments.slice(0,2));
 	
-				const productsToWrite = papa.unparse(products);
-				const fitmentsToWrite = papa.unparse(fitments);
-				fs.writeFile('dbProductsFinal.csv', productsToWrite, (err) => {
-					if (err){
-							console.log(err);
-					}
-				})
+				const fixToWrite = papa.unparse(needFix, {skipEmptyLines:true});
+				const fitmentsToWrite = papa.unparse(fitments, {skipEmptyLines:true});
+				const productsToWrite = papa.unparse(products, {skipEmptyLines:true});
+
 				fs.writeFile('dbFitmentsFinal.csv', fitmentsToWrite, (err) => {
 					if (err){
 							console.log(err);
 					}
 				})
+
+				fs.writeFile('needFix.csv', fixToWrite, (err) => {
+					if (err){
+							console.log(err);
+					}
+				})
+
+				fs.writeFile('needFix.csv', fixToWrite, (err) => {
+					if (err){
+							console.log(err);
+					}
+				})
 				
 				
-			}
+		// 	}
 				
-		})
+		// })
 	}
 })

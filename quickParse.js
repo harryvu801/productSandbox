@@ -2,15 +2,43 @@ const fs = require('fs');
 const path = require('path');
 const papa  = require('papaparse');
 
-// CREATES ARRAY OF MULTI WORD MAKES
-const makes = ['Aprilia', 'Arctic Cat', 'Argo Atv', 'BETA', 'BMW', 'Bombardier', 'Buell', 'Cagiva', 'Can-Am', 'Cannondale', 'CF-Moto', 'Ducati', 'E-TON', 'GAS GAS', 'Harley-Davidson', 'Honda', 'Husaberg', 'Husqvarna', 'Hyosung', 'Indian', 'Kasea', 'Kawasaki', 'KTM', 'Kubota', 'KYMCO', 'Mercury', 'Moto Guzzi', 'MV Agusta', 'MZ', 'Pagsta Motors', 'Piaggio', 'Polaris', 'Renault', 'Sea-Doo', 'Ski-Doo', 'Sno-Jet', 'Suzuki', 'Triumph', 'Vespa', 'Victory', 'Yamaha']
-const multiWord = [];
-makes.forEach(make => {
-  if(make.split(' ').length > 1) {
-    multiWord.push(make)
+const fitmentPath = path.resolve('dbFitmentsFinal.csv')
+const fitmentFile = fs.createReadStream(fitmentPath);
+
+const models = [];
+const modelsForCsv = []
+
+papa.parse(fitmentFile, {
+  header: true,
+  skipEmptyLines: true,
+  complete: (results, file) => {
+    const fitments = results.data;
+
+    fitments.forEach(row => {
+      if(!models.includes(row.model)) {
+        models.push(row.model);
+        modelsForCsv.push({model: row.model});
+        console.log(row.model)
+      }
+    })
+
+    const csvString = papa.unparse(modelsForCsv)
+    fs.writeFile('uniqueModels.csv', csvString, (err) => {
+      if(err) console.log(err);
+    })
+    console.log('DONE!')
   }
 })
-console.log(multiWord)
+
+// CREATES ARRAY OF MULTI WORD MAKES
+// const makes = ['Aprilia', 'Arctic Cat', 'Argo Atv', 'BETA', 'BMW', 'Bombardier', 'Buell', 'Cagiva', 'Can-Am', 'Cannondale', 'CF-Moto', 'Ducati', 'E-TON', 'GAS GAS', 'Harley-Davidson', 'Honda', 'Husaberg', 'Husqvarna', 'Hyosung', 'Indian', 'Kasea', 'Kawasaki', 'KTM', 'Kubota', 'KYMCO', 'Mercury', 'Moto Guzzi', 'MV Agusta', 'MZ', 'Pagsta Motors', 'Piaggio', 'Polaris', 'Renault', 'Sea-Doo', 'Ski-Doo', 'Sno-Jet', 'Suzuki', 'Triumph', 'Vespa', 'Victory', 'Yamaha']
+// const multiWord = [];
+// makes.forEach(make => {
+//   if(make.split(' ').length > 1) {
+//     multiWord.push(make)
+//   }
+// })
+// console.log(multiWord)
 
 // COMBINED THE MASTER SHEETS INTO ONE
 // let csvData = [];
