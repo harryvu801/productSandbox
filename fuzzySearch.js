@@ -58,9 +58,9 @@ papa.parse(indexFile, {
             //     })
                 models.map((item, id) => {
                     const matches = fuse.search(item.model);
-                    const searchResultRow = {...item, id, closestMatch: matches[0] ? matches[0].index : 'No Match Found'}
+                    const searchResultRow = {...item, closestMatch: matches[0] ? matches[0].index : 'No Match Found'}
                     searchResults.push(searchResultRow)
-                    console.log(searchResultRow);
+                    console.log(id, searchResultRow);
                     if(matches.length < 1) {
                         noMatches.push(searchResultRow)
                     }

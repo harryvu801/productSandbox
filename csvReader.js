@@ -17,7 +17,8 @@ const makes = [
   'Pagsta Motors',
   'Ski Doo', 
   'John Deere', 
-  'ARCTIC CAT'
+  'ARCTIC CAT',
+  'arctic Cat'
 ]
 let csvData = [];
 let products = [];
