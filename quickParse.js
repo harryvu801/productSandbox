@@ -2,17 +2,17 @@ const fs = require('fs');
 const path = require('path');
 const papa  = require('papaparse');
 
-const fitmentPath = path.resolve('dbFitmentsFinal.csv')
-const fitmentFile = fs.createReadStream(fitmentPath);
+const path = path.resolve('ngkSparkPlugs.csv')
+const file = fs.createReadStream(path);
 
 const models = [];
 const modelsForCsv = []
 
-papa.parse(fitmentFile, {
+papa.parse(file, {
   header: true,
   skipEmptyLines: true,
   complete: (results, file) => {
-    const fitments = results.data;
+    const data = results.data;
 
     fitments.forEach(row => {
       if(!models.includes(row.model)) {

@@ -11,10 +11,12 @@ const modelsFile = fs.createReadStream(modelsPath);
 
 const options = {
     shouldSort: true, 
-    threshold: 0.6,
+    tokenize: true,
+    findAllMatches: true,
+    threshold: 0.8,
     keys: ['index'],
+    location: 0
     // includeScore: true
-    // tokenize: true
 };
 
 const searchResults = []; 
@@ -27,9 +29,9 @@ papa.parse(indexFile, {
     complete: (results, file) => {
         const index = results.data;
         console.log('index parse complete')
-
+        
         const fuse = new Fuse(index, options)
-
+        
         // const searchResult = fuse.search('XT1200 Super Tenere')
         // console.log(searchResult);
         papa.parse(modelsFile, {
@@ -38,6 +40,7 @@ papa.parse(indexFile, {
             complete: (res, file) => {
                 console.log('models parse complete');
                 const models = res.data
+                const sample = models.slice(0, parseInt(models.length/4))
             //     .forEach(row => {
             //         // console.log(row)
             //        if (!models.includes(row.model)) {
@@ -58,7 +61,11 @@ papa.parse(indexFile, {
             //     })
                 models.map((item, id) => {
                     const matches = fuse.search(item.model);
-                    const searchResultRow = {...item, closestMatch: matches[0] ? matches[0].index : 'No Match Found'}
+                    const searchResultRow = {...item, 
+                        closestMatch: matches[0] ? matches[0].index : 'No Match Found',
+                        second: matches[1] ? matches[1].index : 'No Match',
+                        third: matches[2] ? matches[2].index : 'No Match',
+                    }
                     searchResults.push(searchResultRow)
                     console.log(id, searchResultRow);
                     if(matches.length < 1) {

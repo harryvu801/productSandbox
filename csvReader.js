@@ -29,16 +29,16 @@ let fitments = [];
 // let makeFixes = [];
 let needFix = [];
 
-const filepath = path.resolve(`mastersheetFinal.csv`);
+const filepath = path.resolve(`ngkSparkPlugs.csv`);
 const file = fs.createReadStream(filepath)
 papa.parse(file, {
 	header: true,
 	skipEmptyLines: true,
 	complete: function(results, file) {
-		let fixFilePath = path.resolve('cleanedMakeFixes.csv')
-		let fixFile = fs.createReadStream(fixFilePath)
+		// let fixFilePath = path.resolve('modelIndex.csv')
+		// let fixFile = fs.createReadStream(fixFilePath)
 		csvData = results.data;
-		console.log(`Data length:`, csvData.length);
+		// console.log(`Data length:`, csvData);
 		// papa.parse(fixFile, {
 		// 	header: true,
 		// 	skipEmptyLines: true,
@@ -46,30 +46,47 @@ papa.parse(file, {
 		// 		makeFixes = res.data
 		// 		console.log('makeFixes length:', makeFixes.length)
 				let tempTitles = [];
-				let productId = 0
+				let productId = 8000
 	
 				csvData.forEach(row => {
-					let prodTitle = row['Product Name'].split(' for ');
-					let skuStr = row['SKU'].split('-')[0]
+					// let prodTitle = row['Product Name'].split(' for ');
+					let prodTitle = row.item_name.split(' for ');
+					// let skuStr = row['SKU'].split('-')[0]
+					let skuStr = row.item_sku.split('-')[0]
 					let distMarker = skuStr[skuStr.length -1]
 					if (!tempTitles.includes(prodTitle[0])) {
 						productId++
 						tempTitles.push(prodTitle[0]);
 						let product = {
-							item_name: prodTitle[0],
-							main_image_url: row['Image 1'],
-							product_description: row['Description'],
-							manufacturer: row['Manufacturer'],
+							item_name: row.item_name,
+							main_image_url: row.main_image_url,
+							product_description: row.product_description,
+							manufacturer: row.manufacturer,
 							distributor: distributors[distMarker],
-							brand: row['Brand'],
-							bullet_point1: row['Bullet 1'],
-							bullet_point2: row['Bullet 2'],
-							bullet_point3: row['Bullet 3'],
-							bullet_point4: row['Bullet 4'],
-							bullet_point5: row['Bullet 5'],
+							brand: row.brand_name,
+							bullet_point1: row.bullet_point1,
+							bullet_point2: row.bullet_point2,
+							bullet_point3: row.bullet_point3,
+							bullet_point4: row.bullet_point4,
+							bullet_point5: row.bullet_point5,
 							product_id: productId
-						} 
-						// console.log(product)
+
+						}
+						// let product = {
+						// 	item_name: prodTitle[0],
+						// 	main_image_url: row['Image 1'],
+						// 	product_description: row['Description'],
+						// 	manufacturer: row['Manufacturer'],
+						// 	distributor: distributors[distMarker],
+						// 	brand: row['Brand'],
+						// 	bullet_point1: row['Bullet 1'],
+						// 	bullet_point2: row['Bullet 2'],
+						// 	bullet_point3: row['Bullet 3'],
+						// 	bullet_point4: row['Bullet 4'],
+						// 	bullet_point5: row['Bullet 5'],
+						// 	product_id: productId
+						// } 
+						console.log(product)
 						products.push(product);
 						
 						if(prodTitle[1]){
@@ -97,8 +114,11 @@ papa.parse(file, {
 								year = modelArr.pop();
 								model = modelArr.join(' ').trim();
 							} else  {
-								year = '';
-								model = modelYear[1].trim()
+								let modelArr = modelYear[1].split(' ');
+								modelArr.pop();
+								year = modelArr.pop();
+								model = modelArr.join(' ').trim()
+								// model = modelYear[1].trim()
 							}
 							
 							if(!model) needFix.push(row)
@@ -116,10 +136,10 @@ papa.parse(file, {
 								for (let j = year1; j <= year2; j++){
 									let fitment = {
 										product_id: productId,
-										price: row['Price'],
-										list_price: row['List Price'],
-										item_sku:row['SKU'],
-										part_number: row['MPN'],
+										price: row.standar_price,
+										list_price: row.list_price,
+										item_sku:row.item_sku,
+										part_number: row.part_number,
 										make,
 										model,
 										year: j,
@@ -128,18 +148,46 @@ papa.parse(file, {
 										motorcycle_type: '',
 										epid: ''
 									}
+									// let fitment = {
+									// 	product_id: productId,
+									// 	price: row['Price'],
+									// 	list_price: row['List Price'],
+									// 	item_sku:row['SKU'],
+									// 	part_number: row['MPN'],
+									// 	make,
+									// 	model,
+									// 	year: j,
+									// 	ebayModel: ebayModel ? ebayModel : '',
+									// 	vehicle_type: '',
+									// 	motorcycle_type: '',
+									// 	epid: ''
+									// }
 									fitments.push(fitment);
 								}
 							} else {
+								// let fitment = {
+								// 	product_id: productId,
+								// 	price: row['Price'],
+								// 	list_price: row['List Price'],
+								// 	item_sku:row['SKU'],
+								// 	part_number: row['MPN'],
+								// 	make,
+								// 	model,
+								// 	year,
+								// 	ebayModel: ebayModel ? ebayModel : '',
+								// 	vehicle_type: '',
+								// 	motorcycle_type: '',
+								// 	epid: ''
+								// }
 								let fitment = {
 									product_id: productId,
-									price: row['Price'],
-									list_price: row['List Price'],
-									item_sku:row['SKU'],
-									part_number: row['MPN'],
+									price: row.standar_price,
+									list_price: row.list_price,
+									item_sku:row.item_sku,
+									part_number: row.part_number,
 									make,
 									model,
-									year,
+									year: j,
 									ebayModel: ebayModel ? ebayModel : '',
 									vehicle_type: '',
 									motorcycle_type: '',
@@ -174,8 +222,11 @@ papa.parse(file, {
 								year = modelArr.pop();
 								model = modelArr.join(' ').trim();
 							} else {
-								year = '';
-								model = modelYear[1].trim()
+								let modelArr = modelYear[1].split(' ');
+								modelArr.pop();
+								year = modelArr.pop();
+								model = modelArr.join(' ').trim()
+								// model = modelYear[1].trim()
 							}
 							if(!model) needFix.push(row)
 							// makeFixes.forEach(fix => {
@@ -190,15 +241,29 @@ papa.parse(file, {
 								let year1 = parseInt(yearRange[0]);
 								let year2 = parseInt(yearRange[1]);
 								for (let k = year1; k <= year2; k++){
+									// let fitment = {
+									// 	product_id: products.find(prod => prod.item_name === prodTitle[0]).product_id,
+									// 	price: row['Price'],
+									// 	list_price: row['List Price'],
+									// 	item_sku:row['SKU'],
+									// 	part_number: row['MPN'],
+									// 	make,
+									// 	model,
+									// 	year: k,
+									// 	ebayModel: ebayModel ? ebayModel : '',
+									// 	vehicle_type: '',
+									// 	motorcycle_type: '',
+									// 	epid: ''
+									// }
 									let fitment = {
-										product_id: products.find(prod => prod.item_name === prodTitle[0]).product_id,
-										price: row['Price'],
-										list_price: row['List Price'],
-										item_sku:row['SKU'],
-										part_number: row['MPN'],
+										product_id: productId,
+										price: row.standar_price,
+										list_price: row.list_price,
+										item_sku:row.item_sku,
+										part_number: row.part_number,
 										make,
 										model,
-										year: k,
+										year: j,
 										ebayModel: ebayModel ? ebayModel : '',
 										vehicle_type: '',
 										motorcycle_type: '',
@@ -208,15 +273,29 @@ papa.parse(file, {
 									fitments.push(fitment)
 								}
 							} else{
+								// let fitment = {
+								// 	product_id: products.find(prod => prod.item_name === prodTitle[0]).product_id,
+								// 	price: row['Price'],
+								// 	list_price: row['List Price'],
+								// 	item_sku:row['SKU'],
+								// 	part_number: row['MPN'],
+								// 	make,
+								// 	model,
+								// 	year,
+								// 	ebayModel: ebayModel ? ebayModel : '',
+								// 	vehicle_type: '',
+								// 	motorcycle_type: '',
+								// 	epid: ''
+								// }
 								let fitment = {
-									product_id: products.find(prod => prod.item_name === prodTitle[0]).product_id,
-									price: row['Price'],
-									list_price: row['List Price'],
-									item_sku:row['SKU'],
-									part_number: row['MPN'],
+									product_id: productId,
+									price: row.standar_price,
+									list_price: row.list_price,
+									item_sku:row.item_sku,
+									part_number: row.part_number,
 									make,
 									model,
-									year,
+									year: j,
 									ebayModel: ebayModel ? ebayModel : '',
 									vehicle_type: '',
 									motorcycle_type: '',
@@ -237,13 +316,13 @@ papa.parse(file, {
 				const fitmentsToWrite = papa.unparse(fitments, {skipEmptyLines:true});
 				const productsToWrite = papa.unparse(products, {skipEmptyLines:true});
 
-				fs.writeFile('dbFitmentsFinal.csv', fitmentsToWrite, (err) => {
+				fs.writeFile('sparkPlugFits.csv', fitmentsToWrite, (err) => {
 					if (err){
 							console.log(err);
 					}
 				})
 
-				fs.writeFile('needFix.csv', fixToWrite, (err) => {
+				fs.writeFile('sparkPlugs.csv', productsToWrite, (err) => {
 					if (err){
 							console.log(err);
 					}
