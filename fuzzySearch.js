@@ -4,17 +4,17 @@ const path = require('path');
 const papa  = require('papaparse');
 // const player = require('play-sound')
 
-const indexPath = path.resolve('ebayPowerSportsMasterList.csv');
+const indexPath = path.resolve('modelIndex.csv');
 const indexFile = fs.createReadStream(indexPath)
-const modelsPath = path.resolve('searchTestBatch1.csv');
+const modelsPath = path.resolve('uniqueModels.csv');
 const modelsFile = fs.createReadStream(modelsPath);
 
 const options = {
     shouldSort: true, 
     tokenize: true,
-    threshold: 0.5,
+    threshold: 0.6,
     findAllMatches: true,
-    keys: ["Make", "Model"],
+    keys: [{name:"make"}, {name:"model"}],
 };
 
 const searchResults = []; 
@@ -41,13 +41,13 @@ papa.parse(indexFile, {
                 const sample = models.slice(0, 2000)
            
                 sample.forEach((item, id) => {
-                    console.log(item.searchTerm);
-                    const matches = fuse.search(item.searchTerm);
+                    // console.log(item);
+                    const matches = fuse.search(item.model);
                     const searchResultRow = {
-                        searchTerm: item.searchTerm, 
-                        closestMatch: matches[0] ? matches[0]['Model'] : 'No Match Found',
-                        second: matches[1] ? matches[1]['Model'] : 'No Match',
-                        third: matches[2] ? matches[2]['Model'] : 'No Match',
+                        searchTerm: item.model, 
+                        closestMatch: matches[0] ? matches[0].model : 'No Match Found',
+                        second: matches[1] ? matches[1].model : 'No Match',
+                        third: matches[2] ? matches[2].model : 'No Match',
                     }
                     console.log(id, searchResultRow);
                     searchResults.push(searchResultRow)

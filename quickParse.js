@@ -2,28 +2,35 @@ const fs = require('fs');
 const path = require('path');
 const papa  = require('papaparse');
 
-const filePath = path.resolve('searchTest1.csv')
+const filePath = path.resolve('ebayPowerSportsMasterList.csv')
 const file = fs.createReadStream(filePath);
 
-const prod1 = [];
+const modelList = [];
+const modelData = [];
 
 papa.parse(file, {
   header: true,
   skipEmptyLines: true,
   complete: (results, file) => {
-    const data = results.data.slice(0,5000);
-    console.log('parsing done');
+    const data = results.data
+    console.log('parsing done', data.length);
 
+    // data.forEach((row, index) => {
+    //   let fitmentArr = row['Product Name'].toLowerCase().split(' for ')[1].split(' ');
+    //   fitmentArr.pop();
+    //   row.searchTerm = fitmentArr.join(' ');
+    //   console.log(row.searchTerm);
+    // })
     data.forEach((row, index) => {
-      let fitmentArr = row['Product Name'].toLowerCase().split(' for ')[1].split(' ');
-      fitmentArr.pop();
-      row.searchTerm = fitmentArr.join(' ');
-      console.log(row.searchTerm);
+      if(!modelList.includes(row.Model)) {
+        modelList.push(row.Model)  ;
+        modelData.push({make: row.Make, model: row.Model})    
+      }
     })
-    console.log('sorting done')
+    console.log('sorting done');
 
-    const csv1 = papa.unparse(data);
-    fs.writeFile('searchTestBatch1.csv', csv1, (err) => {
+    const csv1 = papa.unparse(modelData);
+    fs.writeFile('modelIndex.csv', csv1, (err) => {
       if(err) console.log(err);
     })
     console.log('writing done')
