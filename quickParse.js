@@ -2,31 +2,42 @@ const fs = require('fs');
 const path = require('path');
 const papa  = require('papaparse');
 
-const path = path.resolve('ngkSparkPlugs.csv')
-const file = fs.createReadStream(path);
-
-const models = [];
-const modelsForCsv = []
+const listpath = path.resolve('listings_020620 (1).csv')
+const sheetpath = path.resolve('uploadSheet.csv')
+const file = fs.createReadStream(listpath);
+const sheetfile = fs.createReadStream(sheetpath);
+const edit = []
 
 papa.parse(file, {
   header: true,
   skipEmptyLines: true,
   complete: (results, file) => {
     const data = results.data;
+    // console.log('done', data);
+    papa.parse(sheetfile, {
+      header: true,
+      skipEmptyLines:true,
+      complete: (res) => {
+        const items = res.data;
+        // console.log('done', items);
 
-    fitments.forEach(row => {
-      if(!models.includes(row.model)) {
-        models.push(row.model);
-        modelsForCsv.push({model: row.model});
-        console.log(row.model)
+        items.forEach(item => {
+          console.log({...item, Description: ''});
+          let match = data.find(listing => listing['Custom label'] == item.CustomLabel);
+          edit.push({
+            'Action(SiteID=eBayMotors|Country=US|Currency=USD|Version=941)': 'Revise',
+            itemID: match['Item number'],
+            Description: item.Description
+          })
+        })
+
+        const csvString = papa.unparse(edit)
+        fs.writeFile('editSheet.csv', csvString, (err) => {
+          if(err) console.log(err);
+        })
+        console.log('DONE!')
       }
     })
-
-    const csvString = papa.unparse(modelsForCsv)
-    fs.writeFile('uniqueModels.csv', csvString, (err) => {
-      if(err) console.log(err);
-    })
-    console.log('DONE!')
   }
 })
 
