@@ -2,31 +2,33 @@ const fs = require('fs');
 const path = require('path');
 const papa  = require('papaparse');
 
-const path = path.resolve('ngkSparkPlugs.csv')
-const file = fs.createReadStream(path);
+const filePath = path.resolve('searchTest1.csv')
+const file = fs.createReadStream(filePath);
 
-const models = [];
-const modelsForCsv = []
+const prod1 = [];
 
 papa.parse(file, {
   header: true,
   skipEmptyLines: true,
   complete: (results, file) => {
-    const data = results.data;
+    const data = results.data.slice(0,5000);
+    console.log('parsing done');
 
-    fitments.forEach(row => {
-      if(!models.includes(row.model)) {
-        models.push(row.model);
-        modelsForCsv.push({model: row.model});
-        console.log(row.model)
-      }
+    data.forEach((row, index) => {
+      let fitmentArr = row['Product Name'].toLowerCase().split(' for ')[1].split(' ');
+      fitmentArr.pop();
+      row.searchTerm = fitmentArr.join(' ');
+      console.log(row.searchTerm);
     })
+    console.log('sorting done')
 
-    const csvString = papa.unparse(modelsForCsv)
-    fs.writeFile('uniqueModels.csv', csvString, (err) => {
+    const csv1 = papa.unparse(data);
+    fs.writeFile('searchTestBatch1.csv', csv1, (err) => {
       if(err) console.log(err);
     })
-    console.log('DONE!')
+    console.log('writing done')
+
+    console.log('Success!')
   }
 })
 
