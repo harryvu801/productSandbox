@@ -3,8 +3,13 @@ const path = require('path');
 const papa  = require('papaparse');
 const BuildDescription  = require('./BuildDescription');
 
-const filePath = path.resolve('ngkSparkPlugs.csv')
+const filePath = path.resolve('downloadSheet - Sheet1.csv')
 const file = fs.createReadStream(filePath);
+
+const partCategory = {
+  'autopart': 179413,
+  'powersportspart': 179753
+}
 
 let ebayRow = {
     'Action(SiteID=eBayMotors|Country=US|Currency=USD|Version=941)': '',
@@ -45,13 +50,12 @@ let ebayRow = {
   };
 
 const uploadSheet = [];
-// console.log(BuildDescription('fakeimage.com', 'ford 300', 'it fits', 'thing'));
 
 papa.parse(file, {
     header: true,
     skipEmptyLines: true,
     complete: (results, file) => {
-        console.log('done')
+        console.log('parsing done')
         const data = results.data;
         data.forEach(row => {
         let ymm = row.item_name.split(' for ')[1];
@@ -75,8 +79,8 @@ papa.parse(file, {
         });
         let uploadRow = {
             ...ebayRow,
-            'Action(SiteID=eBayMotors|Country=US|Currency=USD|Version=941)': 'Revise',
-            Category: '179413',
+            'Action(SiteID=eBayMotors|Country=US|Currency=USD|Version=941)': 'Add',
+            Category: partCategory[row['feed_product_type']],
             'Product:UPC': 'Does Not Apply',
             'Product:Brand': row.brand_name,
             'Product:MPN': row.part_number,
@@ -85,7 +89,7 @@ papa.parse(file, {
             Description: BuildDescription(row.main_image_url, ymm, row.product_description, row.item_name, bullets),
             '*ConditionID': 1000,
             PicURL: row.main_image_url,
-            '*Quantity': 10,
+            '*Quantity': 2,
             '*Format': 'FixedPrice',
             '*StartPrice': row.list_price,
             '*Duration': 'GTC',
@@ -100,13 +104,22 @@ papa.parse(file, {
         // console.log(uploadRow.Description);
         uploadSheet.push(uploadRow);
       })
+      console.log('sorting done');
+      console.log('upload sheet length:', uploadSheet.length);
 
+      let j = 1
+      for(let i=0; i<uploadSheet.length; i += 400){
+        console.log(i);
+        j++
+        let dataString = papa.unparse(uploadSheet.slice(i, (i+400)))
+        fs.writeFile(`ngkSparkPlugsPt${j}.csv`, dataString, (err) => {
+          if(err) console.log(err);
+        })
+      }
   
-      const dataString = papa.unparse(uploadSheet)
-      fs.writeFile('uploadSheet.csv', dataString, (err) => {
-        if(err) console.log(err);
-      })
-      console.log('DONE!')
+      console.log('writing done')
+
+      console.log('Success!')
     }
   })
   

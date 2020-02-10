@@ -112,8 +112,8 @@ const BuildDescription = (mainImageUrl, YMMs, productDescription, title, bullets
   let description = descriptionStart;
   description = description.replace(/IMAGE MAIN URL/g, mainImageUrl.replace(/http/g, 'https'));
   let bulletString = '';
-  bullets.forEach((YMM) => {
-    bulletString += `<li>${YMM}</li>`;
+  bullets.forEach((bullet) => {
+    bulletString += `<li>• ${bullet}</li>`;
   });
   description = description.replace(/FITMENTS_DESCRIPTION/g, YMMs);
   description = description.replace(/Listing_Description/g, productDescription);

@@ -2,42 +2,33 @@ const fs = require('fs');
 const path = require('path');
 const papa  = require('papaparse');
 
-const listpath = path.resolve('listings_020620 (1).csv')
-const sheetpath = path.resolve('uploadSheet.csv')
-const file = fs.createReadStream(listpath);
-const sheetfile = fs.createReadStream(sheetpath);
-const edit = []
+const filePath = path.resolve('searchTest1.csv')
+const file = fs.createReadStream(filePath);
+
+const prod1 = [];
 
 papa.parse(file, {
   header: true,
   skipEmptyLines: true,
   complete: (results, file) => {
-    const data = results.data;
-    // console.log('done', data);
-    papa.parse(sheetfile, {
-      header: true,
-      skipEmptyLines:true,
-      complete: (res) => {
-        const items = res.data;
-        // console.log('done', items);
+    const data = results.data.slice(0,5000);
+    console.log('parsing done');
 
-        items.forEach(item => {
-          console.log({...item, Description: ''});
-          let match = data.find(listing => listing['Custom label'] == item.CustomLabel);
-          edit.push({
-            'Action(SiteID=eBayMotors|Country=US|Currency=USD|Version=941)': 'Revise',
-            itemID: match['Item number'],
-            Description: item.Description
-          })
-        })
-
-        const csvString = papa.unparse(edit)
-        fs.writeFile('editSheet.csv', csvString, (err) => {
-          if(err) console.log(err);
-        })
-        console.log('DONE!')
-      }
+    data.forEach((row, index) => {
+      let fitmentArr = row['Product Name'].toLowerCase().split(' for ')[1].split(' ');
+      fitmentArr.pop();
+      row.searchTerm = fitmentArr.join(' ');
+      console.log(row.searchTerm);
     })
+    console.log('sorting done')
+
+    const csv1 = papa.unparse(data);
+    fs.writeFile('searchTestBatch1.csv', csv1, (err) => {
+      if(err) console.log(err);
+    })
+    console.log('writing done')
+
+    console.log('Success!')
   }
 })
 
