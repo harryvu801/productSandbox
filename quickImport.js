@@ -55,6 +55,7 @@ papa.parse(file, {
     header: true,
     skipEmptyLines: true,
     complete: (results, file) => {
+
         console.log('parsing done')
         const data = results.data;
         data.forEach(row => {
@@ -77,6 +78,7 @@ papa.parse(file, {
             Title += `${word} `;
           }
         });
+
         let uploadRow = {
             ...ebayRow,
             'Action(SiteID=eBayMotors|Country=US|Currency=USD|Version=941)': 'Add',
@@ -86,6 +88,7 @@ papa.parse(file, {
             'Product:MPN': row.part_number,
             Title,
             Subtitle,
+            // ItemID: row.ItemId,
             Description: BuildDescription(row.main_image_url, ymm, row.product_description, row.item_name, bullets),
             '*ConditionID': 1000,
             PicURL: row.main_image_url,
@@ -107,12 +110,12 @@ papa.parse(file, {
       console.log('sorting done');
       console.log('upload sheet length:', uploadSheet.length);
 
-      let j = 1
-      for(let i=0; i<uploadSheet.length; i += 400){
-        console.log(i);
+      let j = 13
+      for(let i=0; i<uploadSheet.length; i += 450){
+        console.log(`sheets: ${i}`)
         j++
-        let dataString = papa.unparse(uploadSheet.slice(i, (i+400)))
-        fs.writeFile(`ngkSparkPlugsPt${j}.csv`, dataString, (err) => {
+        let dataString = papa.unparse(uploadSheet.slice(i, (i+450)))
+        fs.writeFile(`uploadCsv/uploadSheet${j}.csv`, dataString, (err) => {
           if(err) console.log(err);
         })
       }
@@ -120,6 +123,8 @@ papa.parse(file, {
       console.log('writing done')
 
       console.log('Success!')
+
     }
   })
   
+  // 4, 10, 16, 21, 22, 28

@@ -14,7 +14,7 @@ const options = {
     tokenize: true,
     threshold: 0.6,
     findAllMatches: true,
-    keys: [{name:"make"}, {name:"model"}],
+    keys: ['model'],
 };
 
 const searchResults = []; 
@@ -40,14 +40,14 @@ papa.parse(indexFile, {
                 console.log(models.slice(0, 2));
                 const sample = models.slice(0, 2000)
            
-                sample.forEach((item, id) => {
+                models.forEach((item, id) => {
                     // console.log(item);
                     const matches = fuse.search(item.model);
                     const searchResultRow = {
                         searchTerm: item.model, 
-                        closestMatch: matches[0] ? matches[0].model : 'No Match Found',
-                        second: matches[1] ? matches[1].model : 'No Match',
-                        third: matches[2] ? matches[2].model : 'No Match',
+                        closestMatch: matches[0] ? `${matches[0].make} ${matches[0].model}` : 'No Match Found',
+                        second: matches[1] ? `${matches[1].make} ${matches[1].model}` : 'No Match',
+                        third: matches[2] ? `${matches[2].make} ${matches[2].model}` : 'No Match',
                     }
                     console.log(id, searchResultRow);
                     searchResults.push(searchResultRow)
@@ -55,20 +55,20 @@ papa.parse(indexFile, {
                         noMatches.push(searchResultRow)
                     }
                 })
-            //    console.log(searchResults);
-            //    const resultsToWrite = papa.unparse(searchResults)
+               console.log(searchResults);
+               const resultsToWrite = papa.unparse(searchResults)
             //    const noMatchToWrite = papa.unparse(noMatches)
 
-            //    fs.writeFile('searchResults.csv', resultsToWrite, (err) => {
-            //     if (err){
-            //             console.log(err);
-            //     }
-            //     })
-            //     fs.writeFile('noMatches.csv', noMatchToWrite, (err) => {
-            //         if (err){
-            //                 console.log(err);
-            //         }
-            //     })
+               fs.writeFile('searchResults.csv', resultsToWrite, (err) => {
+                if (err){
+                        console.log(err);
+                }
+                })
+                // fs.writeFile('noMatches.csv', noMatchToWrite, (err) => {
+                //     if (err){
+                //             console.log(err);
+                //     }
+                // })
             }
         })
     }
