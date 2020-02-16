@@ -20,45 +20,79 @@ papa.parse(file, {
       let fitArr = row['Product Name'].split(' for ')[1].split(' ')
       fitArr.pop();
       let mm = fitArr.join(' ');
-      let inMakes = false
-      if(!list2.includes(mm)) {
-        let added = false;
-        list2.push(mm)
-        allMakes.forEach(make => {
-          if (mm.includes(make) && !added) {
-            // if (!mm.split(make)[1]) console.log({mm, make})
-            list1.push({
-              make,
-              model: mm.split(make)[1].trim()
-            })
-            added = true;
-            inMakes = true
-          }
-        })
-        if (!inMakes) console.log(mm)
-      } 
-      // let fitmentArr = row['Product Name'].toLowerCase().split(' for ')[1].split(' ');
-      // fitmentArr.pop();
-      // row.searchTerm = fitmentArr.join(' ');
+      // console.log(mm)
+      let newMm;
+      // console.log(mm)
+      if (mm.includes('2x4')) {
+        newMm = mm.replace('2x4', '')
+      }
+      if (mm.includes('4x4')) {
+        newMm = mm.replace('4x4', '')
+      }
+      if (mm.includes('6x6')) {
+        newMm = mm.replace('6x6', '')
+      }
+      if (mm.includes('8x8')) {
+        newMm = mm.replace('8x8', '')
+      }
+      if (mm.includes('2X4')) {
+        newMm = mm.replace('2X4', '')
+      }
+      if (mm.includes('4X4')) {
+        newMm = mm.replace('4X4', '')
+      }
+      if (mm.includes('6X6')) {
+        newMm = mm.replace('6X6', '')
+      }
+      if (mm.includes('8X8')) {
+        newMm = mm.replace('8X8', '')
+      }
+      if (mm.includes(' /w')) {
+        newMm = mm.slice(0, mm.indexOf(' w/'))
+      }
+      if (mm.includes('(')) {
+        let slice = mm.slice(mm.indexOf('('), mm.indexOf(')')+1)
+        newMm = mm.replace(slice, '')
+      }
+      if(newMm) data[index]['Product Name'] = data[index]['Product Name'].replace(mm, newMm)
+      console.log(data[index]['Product Name'])
+
+      // let inMakes = false
+      // if(!list2.includes(mm)) {
+      //   let added = false;
+      //   list2.push(mm)
+      //   allMakes.forEach(make => {
+      //     if (mm.includes(make) && !added) {
+      //       // if (!mm.split(make)[1]) console.log({mm, make})
+      //       list1.push({
+      //         make,
+      //         model: mm.split(make)[1].trim()
+      //       })
+      //       added = true;
+      //       inMakes = true
+      //     }
+      //   })
+      //   if (!inMakes) console.log(mm)
+      // } 
     })
 
     // list1.sort().forEach((row, index) => {
     //   list1[index] = {make:row}
     // });
-    console.log('sorting done');
-    console.log('fixes', list1);
-    console.log('#ofFixes', list1.length);
+    // console.log('sorting done');
+    // console.log('fixes', list1);
+    // console.log('#ofFixes', list1.length);
     // console.log('badmakes', list2.length);
 
-    const csv1 = papa.unparse(list1);
-    fs.writeFile('dZoneMakes&modelsVer6.csv', csv1, (err) => {
-      if(err) console.log(err);
-    })
+    // const csv1 = papa.unparse(list1);
+    // fs.writeFile('dZoneMakes&modelsVer6.csv', csv1, (err) => {
+    //   if(err) console.log(err);
+    // })
     // const csv2 = papa.unparse(list2);
     // fs.writeFile('extraCommasVer4.csv', csv2, (err) => {
     //   if(err) console.log(err);
     // })
-    console.log('writing done')
+    // console.log('writing done')
 
     console.log('Success!')
   }
