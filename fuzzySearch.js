@@ -6,14 +6,16 @@ const papa  = require('papaparse');
 
 const indexPath = path.resolve('ebayModelIndex.csv');
 const indexFile = fs.createReadStream(indexPath)
-const modelsPath = path.resolve('dZoneMakes&modelsVer6.csv');
+const modelsPath = path.resolve('dZoneMakes&ModelsVer8.csv');
 const modelsFile = fs.createReadStream(modelsPath);
 
 const options = {
     shouldSort: true,
     includeScore: true,
     tokenize: true,
-    threshold: 0.5,
+    threshold: 0.6,
+    location: 0,
+
     findAllMatches: true,
     keys: ['model'],
 };
@@ -31,56 +33,6 @@ papa.parse(modelsFile, {
         console.log('models parse complete')
         // console.log(models.slice(0,2));
         models.forEach((row, i) => {
-            // console.log(row)
-            if (row.model.includes('2x4')) {
-                // console.log('old: ', row.model)
-                let strInd = row.model.indexOf('2x4')
-                row.model = row.model.split('')
-                row.model.splice(strInd, 3);
-                models[i].model = row.model.join('')
-                // console.log('new ', models[i].model)
-            }
-            if (row.model.includes('4x4')) {
-                // console.log('old: ', row.model)
-                let strInd = row.model.indexOf('4x4')
-                row.model = row.model.split('')
-                row.model.splice(strInd, 3);
-                models[i].model = row.model.join('')
-                // console.log('new ', models[i].model)
-            }
-            if (row.model.includes('6x6')) {
-                // console.log('old ', row.model)
-                let strInd = row.model.indexOf('6x6')
-                row.model = row.model.split('')
-                row.model.splice(strInd, 3);
-                models[i].model = row.model.join('')
-                // console.log('new ', models[i].model)
-            }
-            if (row.model.includes('8x8')) {
-                // console.log('old ', row.model)
-                let strInd = row.model.indexOf('8x8')
-                row.model = row.model.split('')
-                row.model.splice(strInd, 3);
-                models[i].model = row.model.join('')
-                // console.log('new ', models[i].model)
-            }
-            if (row.model.includes(' w/')) {
-                // console.log({old:row.model, good:row.model.slice(0, row.model.indexOf(' w/'))})
-                models[i].model = row.model.slice(0, row.model.indexOf(' w/'));
-            }
-            if (row.model.includes('(')) {
-                // console.log('old ', row.model)
-                let strIndStart = row.model.indexOf('(')
-                let strIndEnd = row.model.indexOf(')')
-                row.model = row.model.split('')
-                row.model.splice(strIndStart, strIndEnd);
-                models[i].model = row.model.join('')
-                // console.log('new ', row.model)
-            }
-            if(row.model.includes('/')) {
-                console.log(models[i].model)
-            }
-            // if (models[i].model.includes('2x4') || models[i].model.includes('4x4') || models[i].model.includes('6x6') || models[i].model.includes('8x8'))console.log(models[i].model)
             indexObj[row.make] ? indexObj[row.make].modelsToFix.push(row.model) : indexObj[row.make] = {index:[], modelsToFix: [row.model]}
         })
         // console.log(indexObj);
@@ -104,21 +56,52 @@ papa.parse(modelsFile, {
                     // console.log(indexObj[key].index);
                     const fuse = new Fuse(indexObj[key].index, options);
                     indexObj[key].modelsToFix.forEach(model => {
-                        // let modelNum = model.match(/\d+/g)
                         // console.log(model)
-                        let resultArr = fuse.search(model);
-                        let resultRow ={
+                        let result ={
                             make: key,
                             model,
-                            closetMatch: resultArr[0] ? resultArr[0].item.model : "no match",
-                            score1: resultArr[0] ? resultArr[0].score : "N/A",
-                            second: resultArr[1] ? resultArr[1].item.model : "no match",
-                            score2:  resultArr[1] ? resultArr[1].score : "N/A",
-                            third: resultArr[2] ? resultArr[2].item.model : "no match",
-                            score3:  resultArr[2] ? resultArr[2].score : "N/A",
+                        }
+                        let modelNum = /\d{2,}/.test(model) ? model.match(/\d{2,}/)[0] : false
+                        // if (model.length > 24) {
+                        //     model = model.substring(0, model.length/2);
+                        //     console.log(model)
+                        // }
+                        
+                        let resultArr = fuse.search(model);
+                        if (resultArr[0]) {
+                            let modelNumMatchFound = false;
+                            for (let i =0; i < resultArr.length; i++){
+                                if (/\d{2,}\D+\d{2,}/.test(resultArr[i].item.model)) console.log(resultArr[i].item.model)
+                                if (/\d{2,}/.test(resultArr[i].item.model) && modelNum) {
+                                    let indexNum = resultArr[i].item.model.match(/\d{2,}/)[0]
+                                    // console.log(modelNum);
+                                    if (modelNum.includes(indexNum)) {
+                                        console.log('Match FOUND!:', model, resultArr[i].item.model)
+                                        searchResults.push({...result, 
+                                            closestMatch: resultArr[i].item.model,
+                                            score: resultArr[i].score,
+                                            numberMatched: true,
+                                        }) 
+                                        modelNumMatchFound = true;
+                                        break
+                                    }
+                                } 
+
+                            }
+
+                            if (!modelNumMatchFound) {
+                                searchResults.push({...result, 
+                                    closestMatch: resultArr[0].item.model,
+                                    score: resultArr[0].score,
+                                    numberMatched: false
+                                })
+                            }
+                        } else {
+                            searchResults.push({...result, 
+                                closestMatch: 'No Matches'
+                            })
                         }
                         // console.log(resultRow);
-                        searchResults.push(resultRow)
                     })
                     
                 })
@@ -127,7 +110,7 @@ papa.parse(modelsFile, {
                 const resultsToWrite = papa.unparse(searchResults)
                 //    const noMatchToWrite = papa.unparse(noMatches)
 
-                fs.writeFile('searchResults3.csv', resultsToWrite, (err) => {
+                fs.writeFile('searchResultsVer8-4.csv', resultsToWrite, (err) => {
                     if (err){
                             console.log(err);
                     }
