@@ -12,10 +12,7 @@ const modelsFile = fs.createReadStream(modelsPath);
 const options = {
     shouldSort: true,
     includeScore: true,
-    tokenize: true,
     threshold: 0.6,
-    location: 0,
-
     findAllMatches: true,
     keys: ['model'],
 };
@@ -54,73 +51,82 @@ papa.parse(modelsFile, {
                 // console.log(keys);
                 keys.forEach(key => {
                     // console.log(indexObj[key].index);
-                    const fuse = new Fuse(indexObj[key].index, options);
                     indexObj[key].modelsToFix.forEach(model => {
                         // console.log(model)
                         let result ={
                             make: key,
-                            model,
+                            model: model.trim(),
                         }
-                        let modelNum = /\d{2,}/.test(model) ? model.match(/\d{2,}/)[0] : false
-                        // if (model.length > 24) {
-                        //     model = model.substring(0, model.length/2);
-                        //     console.log(model)
-                        // }
+                        let modelNum = /\d{3,}/.test(model) ? model.match(/\d{3,}/)[0] : false
                         
-                        let resultArr = fuse.search(model);
-                        if (resultArr[0]) {
-                            let modelNumMatchFound = false;
-                            for (let i =0; i < resultArr.length; i++){
-                                if (/\d{2,}\D+\d{2,}/.test(resultArr[i].item.model)) console.log(resultArr[i].item.model)
-                                if (/\d{2,}/.test(resultArr[i].item.model) && modelNum) {
-                                    let indexNum = resultArr[i].item.model.match(/\d{2,}/)[0]
-                                    // console.log(modelNum);
-                                    if (modelNum.includes(indexNum)) {
-                                        console.log('Match FOUND!:', model, resultArr[i].item.model)
-                                        searchResults.push({...result, 
-                                            closestMatch: resultArr[i].item.model,
-                                            score: resultArr[i].score,
-                                            numberMatched: true,
-                                        }) 
-                                        modelNumMatchFound = true;
-                                        break
-                                    }
-                                } 
+                        if (modelNum) {
+                            // console.log(model)
+                            const fuse = new Fuse(indexObj[key].index, {
+                                ...options,
+                                includeScore: false,
+                            });
+                            // console.log(modelNum)
+                            let firstRes = fuse.search(modelNum);
+                            // console.log(firstRes)
+                            const secondInd = firstRes.filter(e => {
+                                return /\d{3,}/.test(e.model) ? e.model.match(/\d{3,}/)[0] === modelNum : false
+                            });
+                            // console.log(secondInd)
+                            const secondFuse = new Fuse(secondInd, options);
+                            let secondRes = secondFuse.search(model);
+                            if(!secondRes[0]) console.log(model, firstRes, secondInd)
 
+                            let searchResult = {...result, 
+                                closestMatch: secondRes[0] ? secondRes[0].item.model : 'No Match',
+                                score: secondRes[0] ? secondRes[0].score: 'N/A',
+                                second: secondRes[1] ? secondRes[1].item.model : 'No Match',
+                                score2: secondRes[1] ? secondRes[1].score: 'N/A',
+                                third: secondRes[2] ? secondRes[2].item.model : 'No Match',
+                                score3: secondRes[2] ? secondRes[2].score: 'N/A',
+                                numberMatched: true,
                             }
-
-                            if (!modelNumMatchFound) {
-                                searchResults.push({...result, 
-                                    closestMatch: resultArr[0].item.model,
-                                    score: resultArr[0].score,
-                                    numberMatched: false
-                                })
-                            }
+                            // console.log(searchResult);
+                            searchResults.push(searchResult)
                         } else {
-                            searchResults.push({...result, 
-                                closestMatch: 'No Matches'
-                            })
+                            const fuse = new Fuse(indexObj[key].index, options);
+                            let resultsArr = fuse.search(model);
+                            // console.log(resultsArr)
+
+                            let searchResult = {...result, 
+                                closestMatch: resultsArr[0] ? resultsArr[0].item.model : 'No Match',
+                                score: resultsArr[0] ? resultsArr[0].score : 'N/A',
+                                second: resultsArr[1] ? resultsArr[1].item.model : 'No Match',
+                                score2: resultsArr[1] ? resultsArr[1].score : 'N/A',
+                                third: resultsArr[2] ? resultsArr[2].item.model : 'No Match',
+                                score3: resultsArr[2] ? resultsArr[2].score : 'N/A',
+                                numberMatched: false,
+                            }
+                            searchResults.push(searchResult)
+                            // console.log(searchResult);
                         }
-                        // console.log(resultRow);
                     })
                     
                 })
                 
+
+
                 console.log('done searching')
                 const resultsToWrite = papa.unparse(searchResults)
-                //    const noMatchToWrite = papa.unparse(noMatches)
-
-                fs.writeFile('searchResultsVer8-4.csv', resultsToWrite, (err) => {
-                    if (err){
-                            console.log(err);
-                    }
-                })
-                console.log('Success!')
-                // fs.writeFile('noMatches.csv', noMatchToWrite, (err) => {
+                
+                // fs.writeFile('searchResultsVer8-9.csv', resultsToWrite, (err) => {
                 //     if (err){
-                //             console.log(err);
+                //         console.log(err);
                 //     }
                 // })
+                console.log('Success!')
+                const viableResults = searchResults.filter(x => x.score <= 0.4)
+                console.log(viableResults.length)
+                const ebayConverterVer1 = papa.unparse(viableResults)
+                fs.writeFile('ebayConverterVer1.csv', ebayConverterVer1, (err) => {
+                    if (err){
+                        console.log(err);
+                    }
+                })
             }
         })
     }

@@ -115,7 +115,7 @@ papa.parse(file, {
         console.log(`Current Row: ${i}`)
         j++
         let dataString = papa.unparse(uploadSheet.slice(i, (i+450)))
-        fs.writeFile(`uploadCsv/uploadSheet${j}.csv`, dataString, (err) => {
+        fs.writeFile(`uploadSheets/uploadSheet${j}.csv`, dataString, (err) => {
           if(err) console.log(err);
         })
       }
@@ -126,5 +126,3 @@ papa.parse(file, {
 
     }
   })
-  
-  // 4, 10, 16, 21, 22, 28

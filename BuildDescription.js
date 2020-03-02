@@ -115,7 +115,11 @@ const BuildDescription = (mainImageUrl, YMMs, productDescription, title, bullets
   bullets.forEach((bullet) => {
     if (bullet) bulletString += `<li> ${bullet}</li>`;
   });
-  description = description.replace(/FITMENTS_DESCRIPTION/g, YMMs);
+  let ymmString = '';
+  YMMs.forEach((ymm) => {
+    if (ymm) ymmString += `<li> ${ymm}</li>`;
+  });
+  description = description.replace(/FITMENTS_DESCRIPTION/g, ymmString);
   description = description.replace(/Listing_Description/g, productDescription);
   description = description.replace(/Features_Description/g, bulletString);
   description = description.replace(/TITLE/g, title);
