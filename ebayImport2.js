@@ -18,13 +18,15 @@ papa.parse(productsFile, {
     skipEmptyLines: true,
     complete: (prodRes) => {
         const products = prodRes.data
+        console.log('Products Loaded:', products.length)
         products.forEach((x,i) => products[i].item_fitments = [])
         papa.parse(fitmentsFile, {
-            header: true,
-            skipEmptyLines: true,
-            complete: (fitRes) => {
-                const fitments = fitRes.data
-                fitments.forEach((fitment) => {
+          header: true,
+          skipEmptyLines: true,
+          complete: (fitRes) => {
+            const fitments = fitRes.data
+            console.log('Fitments Loaded:', fitments.length)
+            fitments.forEach((fitment) => {
                     const productId = fitment.product_id;
                     products.forEach((product) => {
                         if (productId === product.product_id) {
@@ -32,7 +34,7 @@ papa.parse(productsFile, {
                         }
                     });
                 });
-                console.log('Data Loaded')
+                console.log('Data Loaded:', products[0])
                 createEbayCsv(products)
             }
         })
@@ -41,6 +43,7 @@ papa.parse(productsFile, {
 
 
   function createEbayCsv(rows) {
+    console.log('Creating CSVs...')
     const selectedProducts = rows;
     const mpnYMMs = [];
     const csvData = [];
@@ -85,18 +88,20 @@ papa.parse(productsFile, {
           ReturnProfileName: '',
           PaymentProfileName: '',
         };
-        if (!mpnYMMs.find(({ mpn }) => mpn === fitment.part_number)) {
+        if (!mpnYMMs.find(({ mpn }) => mpn === fitment.part_number) && fitment.ebayModel) {
           mpnYMMs.push({
             mpn: fitment.part_number,
             YMMs: [ymm],
             bullets: [
-                product.bullet_point1,
-                product.bullet_point2,
-                product.bullet_point3,
-                product.bullet_point4,
-                product.bullet_point5,
+              product.bullet_point1,
+              product.bullet_point2,
+              product.bullet_point3,
+              product.bullet_point4,
+              product.bullet_point5,
             ]
           });
+          console.log('Product Added:', mpnYMMs.length)
+          console.log(fitment.part_number)
           const baseTitle = `${product.item_name} for ${make}`;
           let Title = '';
           let Subtitle = '';
@@ -133,15 +138,15 @@ papa.parse(productsFile, {
             PaymentProfileName: 'PayPal',
           };
           csvData.push(itemRow);
-          if (fitment.ebayModel) {
-              const fitmentRow = {
-                ...row,
-                Relationship: 'Compatibility',
-                RelationshipDetails: `Year=${fitment.year}|Make=${fitment.make}|Model=${fitment.ebayModel}`,
-              };
-              csvData.push(fitmentRow);
-          }
+            const fitmentRow = {
+              ...row,
+              Relationship: 'Compatibility',
+              RelationshipDetails: `Year=${fitment.year}|Make=${fitment.make}|Model=${fitment.ebayModel}`,
+            };
+            csvData.push(fitmentRow);
+        
         } else {
+
             if (fitment.ebayModel) {
                 mpnYMMs[mpnYMMs.findIndex(({ mpn }) => mpn === fitment.part_number)].YMMs.push(ymm);
                 const itemIndex = csvData.findIndex(x => x.part_number === fitment.part_number);
@@ -155,6 +160,7 @@ papa.parse(productsFile, {
         }
       });
     });
+    console.log('CSV Data Created; Building Descriptions...')
     csvData.forEach((row, index) => {
       if (csvData[index]['Product:MPN']) {
         const ymms = mpnYMMs.find(({ mpn }) => mpn === csvData[index]['Product:MPN']).YMMs;
@@ -168,12 +174,19 @@ papa.parse(productsFile, {
         );
       }
     });
-    console.log('Data Sorted')
+    console.log('Data Ready for Write')
 
     const csvString = papa.unparse(csvData.slice(0, 10000));
     
-    fs.writeFile('EbayCsvTest1.js', data, (err) => {
-        if(err) console.log(err);
-    })
-    console.log('writing done')
+    let j = 0
+      for(let i=0; i<uploadSheet.length; i += 1000){
+        console.log(`Current Row: ${i}`)
+        j++
+        let dataString = papa.unparse(uploadSheet.slice(i, (i+1000)))
+        fs.writeFile(`uploadSheets/ebaySheet${j}.csv`, dataString, (err) => {
+          if(err) console.log(err);
+        })
+      }
+
+      console.log('SUCCESS!!')
   }
