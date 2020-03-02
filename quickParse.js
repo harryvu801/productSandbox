@@ -24,7 +24,8 @@ papa.parse(file, {
       // console.log(mm);
 
       if(/2x4|2X4|4x4|4X4|6x6|6X6|8x8|8X8/.test(mm)) {
-        console.log(mm)
+        console.log(mm);
+        list2.push(mm)
       }
       // let inMakes = false
       // if(!list2.includes(mm)) {
@@ -53,8 +54,8 @@ papa.parse(file, {
     console.log('#ofFixes', list1.length);
     // console.log('badmakes', list2.length);
 
-    const csv1 = papa.unparse(list1);
-    fs.writeFile('dZoneMakes&modelsVer6.csv', csv1, (err) => {
+    const csv1 = papa.unparse(list2);
+    fs.writeFile('strings .csv', csv1, (err) => {
       if(err) console.log(err);
     })
     // const csv2 = papa.unparse(list2);

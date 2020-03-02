@@ -3,7 +3,7 @@ const path = require('path');
 const papa  = require('papaparse');
 const BuildDescription  = require('./BuildDescription');
 
-const filePath = path.resolve('downloadSheet - Sheet1.csv')
+const filePath = path.resolve('sparkPlugsAll.csv')
 const file = fs.createReadStream(filePath);
 
 const partCategory = {
@@ -110,12 +110,12 @@ papa.parse(file, {
       console.log('sorting done');
       console.log('upload sheet length:', uploadSheet.length);
 
-      let j = 13
+      let j = 0
       for(let i=0; i<uploadSheet.length; i += 450){
-        console.log(`sheets: ${i}`)
+        console.log(`Current Row: ${i}`)
         j++
         let dataString = papa.unparse(uploadSheet.slice(i, (i+450)))
-        fs.writeFile(`uploadCsv/uploadSheet${j}.csv`, dataString, (err) => {
+        fs.writeFile(`uploadSheets/uploadSheet${j}.csv`, dataString, (err) => {
           if(err) console.log(err);
         })
       }
@@ -126,5 +126,3 @@ papa.parse(file, {
 
     }
   })
-  
-  // 4, 10, 16, 21, 22, 28
