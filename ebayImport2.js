@@ -195,7 +195,10 @@ papa.parse(productsFile, {
         prev = i-1;
       }
     }
-      
+    let dataString = papa.unparse(csvData.slice(prev, csvData.length))
+    fs.writeFile(`uploadSheets/ebaySheet${j+1}.csv`, dataString, (err) => {
+      if(err) console.log(err);
+    }) 
 
       console.log('SUCCESS!!')
   }
