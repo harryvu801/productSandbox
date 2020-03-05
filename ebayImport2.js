@@ -8,6 +8,44 @@ const partCategory = {
     'powersportspart': 179753,
     'wheels/tires': 182363
 }
+const ebayRow = {
+  'Action(SiteID=eBayMotors|Country=US|Currency=USD|Version=941)': '',
+  Category: '',
+  'Product:UPC': '',
+  'Product:ISBN': '',
+  'Product:EAN': '',
+  'Product:EPID': '',
+  'Product:Brand': '',
+  'Product:MPN': '',
+  'Product:IncludePreFilledItemInformation': '',
+  'Product:IncludeStockPhotoURL': '',
+  'Product:ReturnSearchResultsOnDuplicates': '',
+  Relationship: '',
+  RelationshipDetails: '',
+  Title: '',
+  Subtitle: '',
+  Description: '',
+  '*ConditionID': '',
+  PicURL: '',
+  '*Quantity': '',
+  '*Format': '',
+  '*StartPrice': '',
+  BuyItNowPrice: '',
+  '*Duration': '',
+  'C:Brand': '',
+  'C:Proposition 65': '',
+  '*C:Manufacturer Part Number': '',
+  '*PostalCode': '',
+  GalleryType: '',
+  PaymentInstructions: '',
+  StoreCategory: '',
+  CustomLabel: '',
+  AdditionalDetails: '',
+  ShippingProfileName: '',
+  ReturnProfileName: '',
+  PaymentProfileName: '',
+};
+const needManualCorrection = []
 
 const productsPath = path.resolve(`productTableVer2.csv`);
 const productsFile = fs.createReadStream(productsPath)
@@ -42,7 +80,6 @@ papa.parse(productsFile, {
     }
 })
 
-
   function createEbayCsv(rows) {
     console.log('Creating CSVs...')
     const selectedProducts = rows.slice(0,100);
@@ -53,43 +90,7 @@ papa.parse(productsFile, {
       product.item_fitments.forEach((fitment, index) => {
         const { make } = fitment;
         const ymm = `${fitment.make} ${fitment.model} ${fitment.year}`;
-        const row = {
-          'Action(SiteID=eBayMotors|Country=US|Currency=USD|Version=941)': '',
-          Category: '',
-          'Product:UPC': '',
-          'Product:ISBN': '',
-          'Product:EAN': '',
-          'Product:EPID': '',
-          'Product:Brand': '',
-          'Product:MPN': '',
-          'Product:IncludePreFilledItemInformation': '',
-          'Product:IncludeStockPhotoURL': '',
-          'Product:ReturnSearchResultsOnDuplicates': '',
-          Relationship: '',
-          RelationshipDetails: '',
-          Title: '',
-          Subtitle: '',
-          Description: '',
-          '*ConditionID': '',
-          PicURL: '',
-          '*Quantity': '',
-          '*Format': '',
-          '*StartPrice': '',
-          BuyItNowPrice: '',
-          '*Duration': '',
-          'C:Brand': '',
-          'C:Proposition 65': '',
-          '*C:Manufacturer Part Number': '',
-          '*PostalCode': '',
-          GalleryType: '',
-          PaymentInstructions: '',
-          StoreCategory: '',
-          CustomLabel: '',
-          AdditionalDetails: '',
-          ShippingProfileName: '',
-          ReturnProfileName: '',
-          PaymentProfileName: '',
-        };
+        
         if (!mpnYMMs.find(({ mpn }) => mpn === fitment.part_number) && fitment.ebayModel) {
           mpnYMMs.push({
             mpn: fitment.part_number,
@@ -115,7 +116,7 @@ papa.parse(productsFile, {
             }
           });
           const itemRow = {
-            ...row,
+            ...ebayRow,
             'Action(SiteID=eBayMotors|Country=US|Currency=USD|Version=941)': 'Add',
             Category: partCategory[product.category],
             'Product:Brand': product.brand,
@@ -139,24 +140,27 @@ papa.parse(productsFile, {
           };
           csvData.push(itemRow);
             const fitmentRow = {
-              ...row,
+              ...ebayRow,
               Relationship: 'Compatibility',
               RelationshipDetails: `Year=${fitment.year}|Make=${fitment.make}|Model=${fitment.ebayModel}`,
             };
             csvData.push(fitmentRow);
         
+        } else if (fitment.ebayModel) {
+            mpnYMMs[mpnYMMs.findIndex(({ mpn }) => mpn === fitment.part_number)].YMMs.push(ymm);
+            const itemIndex = csvData.findIndex(x => x.part_number === fitment.part_number);
+            const fitmentRow = {
+              ...ebayRow,
+              Relationship: 'Compatibility',
+              RelationshipDetails: `Year=${fitment.year}|Make=${fitment.make}|Model=${fitment.ebayModel}`,
+            };
+            csvData.splice(itemIndex, 0, fitmentRow);
         } else {
-
-            if (fitment.ebayModel) {
-                mpnYMMs[mpnYMMs.findIndex(({ mpn }) => mpn === fitment.part_number)].YMMs.push(ymm);
-                const itemIndex = csvData.findIndex(x => x.part_number === fitment.part_number);
-                const fitmentRow = {
-                  ...row,
-                  Relationship: 'Compatibility',
-                  RelationshipDetails: `Year=${fitment.year}|Make=${fitment.ebayMake ? fitment.ebayMake : fitment.make}|Model=${fitment.model}`,
-                };
-                csvData.splice(itemIndex, 0, fitmentRow);
-            }
+          needManualCorrection.push({
+            sku: fitment.item_sku,
+            make: fitment.make,
+            model: fitment.model
+          })
         }
       });
     });
@@ -183,10 +187,10 @@ papa.parse(productsFile, {
     for(let i=0; i< csvData.length; i++){
       if (csvData[i]['Product:MPN'] ){
         sheetCounter++
-        console.log(sheetCounter)
       } 
-      if (sheetCounter === 301) {
+      if (sheetCounter === 401) {
         j++
+        console.log(j)
         let dataString = papa.unparse(csvData.slice(prev, (i-1)))
         fs.writeFile(`uploadSheets/ebaySheet${j}.csv`, dataString, (err) => {
           if(err) console.log(err);
@@ -198,7 +202,12 @@ papa.parse(productsFile, {
     let dataString = papa.unparse(csvData.slice(prev, csvData.length))
     fs.writeFile(`uploadSheets/ebaySheet${j+1}.csv`, dataString, (err) => {
       if(err) console.log(err);
-    }) 
+    })
+  
+    let needFixing = papa.unparse(needManualCorrection);
+    fs.writeFile('modelsNeedManualFixing.csv', needFixing, (err) => {
+      if(err) console.log(err);
+    })
 
-      console.log('SUCCESS!!')
+    console.log('SUCCESS!!')
   }
