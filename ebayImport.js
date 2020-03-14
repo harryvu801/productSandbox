@@ -3,7 +3,7 @@ const path = require('path');
 const papa  = require('papaparse');
 const BuildDescription  = require('./BuildDescription');
 
-const filePath = path.resolve('sparkPlugsAll.csv')
+const filePath = path.resolve('allMissingSparkPlugs.csv')
 const file = fs.createReadStream(filePath);
 
 const partCategory = {
@@ -59,7 +59,7 @@ papa.parse(file, {
         console.log('parsing done')
         const data = results.data;
         data.forEach(row => {
-        let ymm = row.item_name.split(' for ')[1];
+        let ymm = [row.item_name.split(' for ')[1]]
         let bullets = [
             row.bullet_point1,
             row.bullet_point2,
@@ -115,7 +115,7 @@ papa.parse(file, {
         console.log(`Current Row: ${i}`)
         j++
         let dataString = papa.unparse(uploadSheet.slice(i, (i+450)))
-        fs.writeFile(`uploadSheets/uploadSheet${j}.csv`, dataString, (err) => {
+        fs.writeFile(`uploadSheets/sparkPlugs/uploadSheet${j}.csv`, dataString, (err) => {
           if(err) console.log(err);
         })
       }

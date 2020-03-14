@@ -47,7 +47,7 @@ const ebayRow = {
 };
 const needManualCorrection = []
 
-const productsPath = path.resolve(`productTableVer2.csv`);
+const productsPath = path.resolve(`productTableVer3.csv`);
 const productsFile = fs.createReadStream(productsPath)
 const fitmentsPath = path.resolve('fitmentTableVer1.csv')
 const fitmentsFile = fs.createReadStream(fitmentsPath)
@@ -65,31 +65,36 @@ papa.parse(productsFile, {
           complete: (fitRes) => {
             const fitments = fitRes.data
             console.log('Fitments Loaded:', fitments.length)
-            fitments.forEach((fitment) => {
-                    const productId = fitment.product_id;
-                    products.forEach((product) => {
-                        if (productId === product.product_id) {
-                            product.item_fitments.push(fitment);
-                        }
-                    });
-                });
-                console.log('Data Loaded:')
-                createEbayCsv(products)
-            }
+            fitments.forEach((row) => {
+              let part_number = /#-|\*-|\/-/.test(row.part_number) ? row.part_number.replace(/#-\S+|\*-\S+|\/-\S+/, '') : row.part_number
+              let fitment = {
+                ...row,
+                part_number 
+              }
+              const productId = fitment.product_id;
+              products.forEach((product) => {
+                  if (productId === product.product_id) {
+                      product.item_fitments.push(fitment);
+                  }
+              });
+            });
+            console.log('Data Ready:')
+            createEbayCsv(products)
+          }
         })
     }
 })
 
   function createEbayCsv(rows) {
     console.log('Creating CSVs...')
-    const selectedProducts = rows.slice(0,100);
+    const selectedProducts = rows.slice(900, 1200); // CHANGE RANGE VALUES HERE
     const mpnYMMs = [];
     const csvData = [];
     selectedProducts.forEach((product, index) => {
       console.log('Product Index:', index, 'Current # of Products:', mpnYMMs.length)
       product.item_fitments.forEach((fitment, index) => {
         const { make } = fitment;
-        const ymm = `${fitment.make} ${fitment.model} ${fitment.year}`;
+        const ymm = `${fitment.make} ${fitment.ebayModel ? fitment.ebayModel: fitment.model} ${fitment.year}`;
         
         if (!mpnYMMs.find(({ mpn }) => mpn === fitment.part_number) && fitment.ebayModel) {
           mpnYMMs.push({
@@ -126,9 +131,9 @@ papa.parse(productsFile, {
             Description: product.product_description,
             '*ConditionID': '1000',
             PicURL: product.main_image_url,
-            '*Quantity': '10',
+            '*Quantity': '5',
             '*Format': 'FixedPrice',
-            '*StartPrice': fitment.list_price,
+            '*StartPrice': fitment.price,
             '*Duration': 'GTC',
             'C:Brand': product.brand,
             '*C:Manufacturer Part Number': fitment.part_number,
@@ -183,7 +188,7 @@ papa.parse(productsFile, {
 
     let sheetCounter = 0;
     let prev = 0;
-    let j = 0
+    let j = 143; // CHANGE SHEET COUNTER HERE
     for(let i=0; i< csvData.length; i++){
       if (csvData[i]['Product:MPN'] ){
         sheetCounter++
@@ -195,19 +200,20 @@ papa.parse(productsFile, {
         fs.writeFile(`uploadSheets/ebaySheet${j}.csv`, dataString, (err) => {
           if(err) console.log(err);
         })
-        sheetCounter = 0;
-        prev = i-1;
+        sheetCounter = 1;
+        prev = i;
       }
     }
     let dataString = papa.unparse(csvData.slice(prev, csvData.length))
+    console.log(j+1)
     fs.writeFile(`uploadSheets/ebaySheet${j+1}.csv`, dataString, (err) => {
       if(err) console.log(err);
     })
   
-    let needFixing = papa.unparse(needManualCorrection);
-    fs.writeFile('modelsNeedManualFixing.csv', needFixing, (err) => {
-      if(err) console.log(err);
-    })
+    // let needFixing = papa.unparse(needManualCorrection);
+    // fs.writeFile('modelsNeedManualFixing.csv', needFixing, (err) => {
+    //   if(err) console.log(err);
+    // })
 
     console.log('SUCCESS!!')
   }
